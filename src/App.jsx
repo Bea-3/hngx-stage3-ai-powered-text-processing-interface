@@ -1,15 +1,20 @@
 import { useState, useEffect } from "react";
 import { IoIosSend } from "react-icons/io";
-import { initializeLanguageDetector, detectLanguage } from "./Components/LanguageDetector";
+import {
+  initializeLanguageDetector,
+  detectLanguage,
+} from "./Components/LanguageDetector";
 import { initializeTranslator, translateText } from "./Components/Translator";
 import { Loader } from "./Components/Loader";
+import { Summarizer } from "./Components/Summarizer";
 
 function App() {
   const [text, setText] = useState("");
   const [output, setOutput] = useState([]);
   const [detector, setDetector] = useState(null);
-  const [globalError, setGlobalError] = useState(""); 
+  const [globalError, setGlobalError] = useState("");
   const [isTranslating, setIsTranslating] = useState(false);
+  const [isSummarizing, setIsSummarizing] = useState(null);
 
   // Initialize language detector on mount
   useEffect(() => {
@@ -34,6 +39,7 @@ function App() {
       text,
       language: "Detecting...",
       translation: null,
+      summary: null,
       translator: null,
       targetLanguage: "es", // Default target language
       error: null, // Add an error field to each output item
@@ -49,7 +55,10 @@ function App() {
       const detectedLanguage = await detectLanguage(detector, text);
 
       // Initialize translator
-      const newTranslator = await initializeTranslator(detectedLanguage, newOutput.targetLanguage);
+      const newTranslator = await initializeTranslator(
+        detectedLanguage,
+        newOutput.targetLanguage
+      );
 
       // Update the output with the detected language and translator instance
       setOutput((prevOutput) => {
@@ -66,10 +75,38 @@ function App() {
       // Update the output with an error message
       setOutput((prevOutput) => {
         const updatedOutput = [...prevOutput];
-        updatedOutput[updatedOutput.length - 1].language = "Error detecting language";
-        updatedOutput[updatedOutput.length - 1].error = "Failed to detect language.";
+        updatedOutput[updatedOutput.length - 1].language =
+          "Error detecting language";
+        updatedOutput[updatedOutput.length - 1].error =
+          "Failed to detect language.";
         return updatedOutput;
       });
+    }
+  };
+
+  const handleSummarize = async (index) => {
+    const selectedOutput = output[index];
+
+    if (!selectedOutput.text) return;
+
+    setIsSummarizing(index);
+
+    try {
+      const summary = await Summarizer(selectedOutput.text); // Call Summarizer function
+      setOutput((prevOutput) => {
+        const updatedOutput = [...prevOutput];
+        updatedOutput[index].summary = summary;
+        return updatedOutput;
+      });
+    } catch (err) {
+      console.error("Summarization error:", err);
+      setOutput((prevOutput) => {
+        const updatedOutput = [...prevOutput];
+        updatedOutput[index].summary = "Error summarizing text.";
+        return updatedOutput;
+      });
+    } finally {
+      setIsSummarizing(null);
     }
   };
 
@@ -101,13 +138,13 @@ function App() {
         selectedOutput.language,
         selectedOutput.targetLanguage
       );
-      
+
       const translatedText = await translateText(
         translator,
         selectedOutput.text,
         selectedOutput.targetLanguage
       );
-      
+
       setOutput((prevOutput) => {
         const updatedOutput = [...prevOutput];
         updatedOutput[index].translation = translatedText;
@@ -145,57 +182,84 @@ function App() {
       <h1 className="w-full border border-amber-200">LangAI</h1>
 
       {/* Display global errors (detector initialization) */}
-      {globalError && <p className="text-red-500 w-full max-w-[800px]">{globalError}</p>}
+      {globalError && (
+        <p className="text-red-500 w-full max-w-[800px]">{globalError}</p>
+      )}
 
       <div className="w-full min-h-[500px] max-w-[800px] border-green-300 rounded-lg shadow flex flex-col flex-1 justify-between">
         {/* Output Field */}
         <div className="h-fit overflow-y-auto border-b p-2">
           {output.map((item, index) => (
-            <div key={index} className="text-black mb-2 flex flex-col justify-between">
+            <div
+              key={index}
+              className="text-black mb-2 flex flex-col justify-between"
+            >
               <div className="border border-gray-100 rounded-2xl p-3 my-3 w-full md:w-[70%] self-end">
-              <p className="">{item.text}</p>
-              {/* Display detected language */}
-              <p className="text-sm text-gray-500 mt-1">Language: {item.language}</p>
-              
-              {/* Display item-specific error if present */}
-              {item.error && (
-                <p className="text-red-500 text-sm mt-1">{item.error}</p>
-              )}
+                <p className="">{item.text}</p>
 
-              {/* Language selection dropdown */}
-              <div className="flex items-center gap-2 mt-4 text-sm">
-                <div className="flex items-center gap-2 p-2 rounded-xl">
-                <label className="text-sm">Translate to:</label>
-                <select
-                  className="border rounded w-[95px] py-0.5 text-[12px]"
-                  value={item.targetLanguage}
-                  onChange={(e) => handleTargetLanguageChange(index, e.target.value)}
-                >
-                  <option value="en">English</option>
-                  <option value="es">Spanish</option>
-                  <option value="pt">Portuguese</option>
-                  <option value="ru">Russian</option>
-                  <option value="tr">Turkish</option>
-                  <option value="fr">French</option>
-                </select>
+                <div className="flex justify-between items-center mt-2">
+                  {/* Display detected language */}
+                <p className="text-sm text-gray-500 mt-1">
+                  Language: {item.language}
+                </p>
+                 {/* Display character count */}
+                <p className="text-xs text-gray-500 mt-1">
+                  {item.text.length}/150 characters
+                </p>
 
-                {/* Translate button */}
-                <button
-                  className="bg-blue-500 text-white p-1 rounded text-xs"
-                  onClick={() => handleTranslate(index)}
-                >
-                  Translate
-                </button>
-
-
-                {/* Summarize button */}
-                <button className="bg-green-600 text-white p-1 rounded text-xs ml-4">Summarize</button>
+                
                 </div>
-                
-                
+               
+
+                {/* Display item-specific error if present */}
+                {item.error && (
+                  <p className="text-red-500 text-sm mt-1">{item.error}</p>
+                )}
+
+                {/* Language selection dropdown */}
+                <div className="flex items-center gap-2 mt-4 text-sm">
+                  <div className="flex items-center gap-2 p-2 rounded-xl">
+                    <label className="text-sm">Translate to:</label>
+                    <select
+                      className="border rounded w-[95px] py-0.5 text-[12px]"
+                      value={item.targetLanguage}
+                      onChange={(e) =>
+                        handleTargetLanguageChange(index, e.target.value)
+                      }
+                    >
+                      <option value="en">English</option>
+                      <option value="es">Spanish</option>
+                      <option value="pt">Portuguese</option>
+                      <option value="ru">Russian</option>
+                      <option value="tr">Turkish</option>
+                      <option value="fr">French</option>
+                    </select>
+
+                    {/* Translate button */}
+                    <button
+                      className="bg-blue-500 text-white p-1 rounded text-xs"
+                      onClick={() => handleTranslate(index)}
+                    >
+                      Translate
+                    </button>
+
+                    {/* Summarize button - only appears if text length > 150 */}
+                    {item.text.length > 150 && (
+                      <button className="bg-green-600 text-white p-1 rounded text-xs ml-4
+                      "
+                      onClick={() => handleSummarize(index)}>
+                        {isSummarizing === index ? "Summarizing..." : "Summarize"}
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
-              </div>
-              
+
+              {item.summary && (
+                <p className="mt-3 mb-6 w-full md:w-[70%] border border-gray-300 rounded-2xl p-3">
+                  Summary: {item.summary}
+                </p>
+              )}
 
               {/* Show translated text here */}
               {isTranslating === index ? (
@@ -203,7 +267,9 @@ function App() {
                   <Loader />
                 </p>
               ) : item.translation ? (
-                <p className="mt-3 mb-6 w-full md:w-[70%] border border-gray-300 rounded-2xl p-3 ">Translation: {item.translation}</p>
+                <p className="mt-3 mb-6 w-full md:w-[70%] border border-gray-300 rounded-2xl p-3 ">
+                  Translation: {item.translation}
+                </p>
               ) : null}
             </div>
           ))}
