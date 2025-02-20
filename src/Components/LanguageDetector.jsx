@@ -34,9 +34,9 @@ export const initializeLanguageDetector = async () => {
     try {
       const result = await detector.detect(textInput);
       if(result.length > 0 ){
-        return result[0].detectedLanguage || "Unknown";
+        return result[0].detectedLanguage || "Language not recognised";
       }
-      return "Unknown";
+      return "Language not recognised";
     } catch (error) {
       console.error("Error detecting language:", error);
       return "Error detecting language";

@@ -15,6 +15,7 @@ function App() {
   const [globalError, setGlobalError] = useState("");
   const [isTranslating, setIsTranslating] = useState(false);
   const [isSummarizing, setIsSummarizing] = useState(null);
+  const [welcome, setWelcome]  = useState(true);
 
   // Initialize language detector on mount
   useEffect(() => {
@@ -33,6 +34,8 @@ function App() {
   // Function to handle send
   const handleSend = async () => {
     if (text.trim() === "") return;
+
+    setWelcome(false);
 
     // Add the text to the output with a "Detecting..." placeholder
     const newOutput = {
@@ -84,6 +87,67 @@ function App() {
     }
   };
 
+   // Function to update target language for a specific message
+   const handleTargetLanguageChange = (index, newLanguage) => {
+    setOutput((prevOutput) => {
+      const updatedOutput = [...prevOutput];
+      updatedOutput[index].targetLanguage = newLanguage;
+      // We'll let the user decide when to translate with the new language
+      return updatedOutput;
+    });
+  };
+  
+
+  // Function to handle translation
+  const handleTranslate = async (index) => {
+    const selectedOutput = output[index];
+  
+    // Clear any previous errors
+    setOutput((prevOutput) => {
+      const updatedOutput = [...prevOutput];
+      updatedOutput[index].error = null;
+      return updatedOutput;
+    });
+  
+    // If source and target languages are the same, return the original text
+    if (selectedOutput.language === selectedOutput.targetLanguage) {
+      setOutput((prevOutput) => {
+        const updatedOutput = [...prevOutput];
+        updatedOutput[index].translation = selectedOutput.text;
+        return updatedOutput;
+      });
+      return;
+    }
+  
+    setIsTranslating(index);
+    
+    try {
+      const translatedText = await translateText(
+        selectedOutput.language,
+        selectedOutput.targetLanguage,
+        selectedOutput.text
+      );
+  
+      setOutput((prevOutput) => {
+        const updatedOutput = [...prevOutput];
+        updatedOutput[index].translation = translatedText;
+        return updatedOutput;
+      });
+    } catch (err) {
+      console.error("Translation error:", err);
+      setOutput((prevOutput) => {
+        const updatedOutput = [...prevOutput];
+        updatedOutput[index].error = "Error translating text.";
+        return updatedOutput;
+      });
+    } finally {
+      setIsTranslating(null);
+    }
+  };
+  
+  
+
+ 
   const handleSummarize = async (index) => {
     const selectedOutput = output[index];
 
@@ -110,85 +174,29 @@ function App() {
     }
   };
 
-  // Function to handle translation
-  const handleTranslate = async (index) => {
-    const selectedOutput = output[index];
-
-    if (!selectedOutput.translator) {
-      // Update item-specific error instead of global error
-      setOutput((prevOutput) => {
-        const updatedOutput = [...prevOutput];
-        updatedOutput[index].error = "Translation not available.";
-        return updatedOutput;
-      });
-      return;
-    }
-
-    setIsTranslating(index);
-    try {
-      // Clear any previous errors
-      setOutput((prevOutput) => {
-        const updatedOutput = [...prevOutput];
-        updatedOutput[index].error = null;
-        return updatedOutput;
-      });
-
-      // Initialize a new translator with the current target language
-      const translator = await initializeTranslator(
-        selectedOutput.language,
-        selectedOutput.targetLanguage
-      );
-
-      const translatedText = await translateText(
-        translator,
-        selectedOutput.text,
-        selectedOutput.targetLanguage
-      );
-
-      setOutput((prevOutput) => {
-        const updatedOutput = [...prevOutput];
-        updatedOutput[index].translation = translatedText;
-        updatedOutput[index].translator = translator;
-        return updatedOutput;
-      });
-    } catch (err) {
-      console.error("Translation error:", err);
-      setOutput((prevOutput) => {
-        const updatedOutput = [...prevOutput];
-        updatedOutput[index].translation = null;
-        updatedOutput[index].error = "Error translating text.";
-        return updatedOutput;
-      });
-    } finally {
-      setIsTranslating(null);
-    }
-  };
-
-  // Function to update target language for a specific message
-  // Modified: Now it just updates the language without triggering translation
-  const handleTargetLanguageChange = (index, newLanguage) => {
-    setOutput((prevOutput) => {
-      const updatedOutput = [...prevOutput];
-      updatedOutput[index].targetLanguage = newLanguage;
-      // We're NOT clearing the previous translation here anymore
-      // We'll let the user decide when to translate with the new language
-      return updatedOutput;
-    });
-  };
-
   return (
-    <div className="container border border-red-400 m-auto w-screen min-h-screen p-2 flex flex-col items-center gap-5">
+    <div className="container m-auto w-screen min-h-screen p-4 flex flex-col items-center gap-5 font-questrial">
       {/* Logo */}
-      <h1 className="w-full border border-amber-200">LangAI</h1>
+      <h1 className="w-fit text-purple-700 font-atkinson text-3xl self-start p-2 shadow rounded-xl bg-gray-50">Lang<span className="text-gray-500">AI</span></h1>
 
       {/* Display global errors (detector initialization) */}
       {globalError && (
         <p className="text-red-500 w-full max-w-[800px]">{globalError}</p>
       )}
 
-      <div className="w-full min-h-[500px] max-w-[800px] border-green-300 rounded-lg shadow flex flex-col flex-1 justify-between">
+      {/* Show welcome message only if no output */}
+      {welcome && output.length === 0 && (
+        <div className="text-center text-gray-600 p-4 bg-gray-100 rounded-lg max-w-[800px] mt-4">
+          <h2 className="text-2xl font-semibold">Welcome to LangAI 🎉</h2>
+          <p className="mt-2 font-">
+            Type something to **detect the language, translate, and summarize your text**.
+          </p>
+        </div>
+      )}
+
+      <div className="w-full min-h-[500px] max-w-[800px] flex flex-col flex-1 justify-between">
         {/* Output Field */}
-        <div className="h-fit overflow-y-auto border-b p-2">
+        <div className="h-fit overflow-y-auto p-2">
           {output.map((item, index) => (
             <div
               key={index}
@@ -205,9 +213,7 @@ function App() {
                  {/* Display character count */}
                 <p className="text-xs text-gray-500 mt-1">
                   {item.text.length}/150 characters
-                </p>
-
-                
+                </p>                
                 </div>
                
 
@@ -217,9 +223,9 @@ function App() {
                 )}
 
                 {/* Language selection dropdown */}
-                <div className="flex items-center gap-2 mt-4 text-sm">
-                  <div className="flex items-center gap-2 p-2 rounded-xl">
-                    <label className="text-sm">Translate to:</label>
+                <div className="flex items-center gap-2 mt-2 text-sm justify-end">
+                  <div className="flex items-center gap-2">
+                    <label className="text-sm text-gray-600">Translate to:</label>
                     <select
                       className="border rounded w-[95px] py-0.5 text-[12px]"
                       value={item.targetLanguage}
@@ -237,17 +243,19 @@ function App() {
 
                     {/* Translate button */}
                     <button
-                      className="bg-blue-500 text-white p-1 rounded text-xs"
+                      className="border bg-purple-400 hover:border-purple-500 hover:bg-gray-50 hover:text-gray-800 text-white p-1 rounded text-xs"
                       onClick={() => handleTranslate(index)}
+                      aria-label="Translate"
                     >
                       Translate
                     </button>
 
                     {/* Summarize button - only appears if text length > 150 */}
-                    {item.text.length > 150 && (
-                      <button className="bg-green-600 text-white p-1 rounded text-xs ml-4
+                    {item.text.length > 150 && item.language === "en" && (
+                      <button className="border border-purple-500 text-gray-600 hover:bg-purple-400 hover:text-white p-1 rounded text-xs ml-2
                       "
-                      onClick={() => handleSummarize(index)}>
+                      onClick={() => handleSummarize(index)}
+                      aria-label="Summarize">
                         {isSummarizing === index ? "Summarizing..." : "Summarize"}
                       </button>
                     )}
@@ -267,8 +275,8 @@ function App() {
                   <Loader />
                 </p>
               ) : item.translation ? (
-                <p className="mt-3 mb-6 w-full md:w-[70%] border border-gray-300 rounded-2xl p-3 ">
-                  Translation: {item.translation}
+                <p className="mt-3 mb-6 w-full md:w-[70%] border border-gray-300 bg-gray-50 rounded-2xl p-3 ">
+                  <b>Translation:</b><br/>{item.translation}
                 </p>
               ) : null}
             </div>
@@ -276,20 +284,21 @@ function App() {
         </div>
 
         {/* Input Field & Send Button */}
-        <div className="border border-amber-600 rounded-2xl flex items-center justify-center gap-3 p-2 mt-5 sticky bottom-0 bg-white">
+        <div className="border border-purple-400 rounded-2xl flex items-center justify-center gap-3 p-2 mt-5 sticky bottom-0 bg-white shadow text-gray-700">
           <textarea
-            className="border outline-0 resize-none w-[90%]"
+            className="outline-0 resize-none w-[90%]"
             placeholder="Enter text here"
             value={text}
             onChange={(e) => setText(e.target.value)}
             rows={3}
+            aria-label="textarea"
           ></textarea>
 
           <button
-            className="border flex justify-center items-center bg-purple-400 rounded-2xl"
+            className="border border-purple-500 flex justify-center items-center rounded-xl"
             onClick={handleSend}
           >
-            <IoIosSend className="w-10 h-10" />
+            <IoIosSend className="w-10 h-10 p-1 text-purple-500 hover:text-purple-700" />
           </button>
         </div>
       </div>

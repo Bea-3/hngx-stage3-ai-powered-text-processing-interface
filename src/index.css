@@ -1,4 +1,12 @@
+@import url('https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Mono:ital,wght@0,200..800;1,200..800&family=Questrial&family=Road+Rage&display=swap');
+
 @import "tailwindcss";
+
+@theme {
+  --font-roadrage: "Road Rage", serif; 
+  --font-atkinson: "Atkinson Hyperlegible Mono", serif;
+  --font-questrial: "Questrial", serif;
+}
 
 *{
   box-sizing: border-box;
@@ -18,11 +26,9 @@
 body {
   margin: 0;
   padding:auto;
-
+  font-size:'16px';
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+button:focus, textarea:focus, select:focus {
+  outline: 1px solid #d7b0fc; /* Tailwind's purple-500 */
 }
-
