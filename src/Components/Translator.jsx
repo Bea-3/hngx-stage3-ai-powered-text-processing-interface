@@ -3,7 +3,9 @@ export const initializeTranslator = async (sourceLang, targetLang) => {
     const translatorCapabilities = await self.ai.translator.capabilities();
 
     if (!translatorCapabilities.languagePairAvailable(sourceLang, targetLang)) {
-      console.log(`Translation from ${sourceLang} to ${targetLang} is not supported.`);
+      console.log(
+        `Translation from ${sourceLang} to ${targetLang} is not supported.`
+      );
       return null;
     }
 
@@ -31,7 +33,10 @@ export const translateText = async (sourceLang, targetLang, text) => {
   const availableLanguages = ["en", "es", "pt", "ru", "tr", "fr"];
 
   // Ensure translation is valid
-  if (!availableLanguages.includes(sourceLang) || !availableLanguages.includes(targetLang)) {
+  if (
+    !availableLanguages.includes(sourceLang) ||
+    !availableLanguages.includes(targetLang)
+  ) {
     return `Translation from ${sourceLang.toUpperCase()} to ${targetLang.toUpperCase()} is not available.`;
   }
 

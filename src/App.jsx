@@ -15,7 +15,7 @@ function App() {
   const [globalError, setGlobalError] = useState("");
   const [isTranslating, setIsTranslating] = useState(false);
   const [isSummarizing, setIsSummarizing] = useState(null);
-  const [welcome, setWelcome]  = useState(true);
+  const [welcome, setWelcome] = useState(true);
 
   // Initialize language detector on mount
   useEffect(() => {
@@ -87,8 +87,8 @@ function App() {
     }
   };
 
-   // Function to update target language for a specific message
-   const handleTargetLanguageChange = (index, newLanguage) => {
+  // Function to update target language for a specific message
+  const handleTargetLanguageChange = (index, newLanguage) => {
     setOutput((prevOutput) => {
       const updatedOutput = [...prevOutput];
       updatedOutput[index].targetLanguage = newLanguage;
@@ -96,19 +96,18 @@ function App() {
       return updatedOutput;
     });
   };
-  
 
   // Function to handle translation
   const handleTranslate = async (index) => {
     const selectedOutput = output[index];
-  
+
     // Clear any previous errors
     setOutput((prevOutput) => {
       const updatedOutput = [...prevOutput];
       updatedOutput[index].error = null;
       return updatedOutput;
     });
-  
+
     // If source and target languages are the same, return the original text
     if (selectedOutput.language === selectedOutput.targetLanguage) {
       setOutput((prevOutput) => {
@@ -118,16 +117,16 @@ function App() {
       });
       return;
     }
-  
+
     setIsTranslating(index);
-    
+
     try {
       const translatedText = await translateText(
         selectedOutput.language,
         selectedOutput.targetLanguage,
         selectedOutput.text
       );
-  
+
       setOutput((prevOutput) => {
         const updatedOutput = [...prevOutput];
         updatedOutput[index].translation = translatedText;
@@ -144,10 +143,7 @@ function App() {
       setIsTranslating(null);
     }
   };
-  
-  
 
- 
   const handleSummarize = async (index) => {
     const selectedOutput = output[index];
 
@@ -177,7 +173,9 @@ function App() {
   return (
     <div className="container m-auto w-screen min-h-screen p-4 flex flex-col items-center gap-5 font-questrial">
       {/* Logo */}
-      <h1 className="w-fit text-purple-700 font-atkinson text-3xl self-start p-2 shadow rounded-xl bg-gray-50">Lang<span className="text-gray-500">AI</span></h1>
+      <h1 className="w-fit text-purple-700 font-atkinson text-3xl self-start p-2 shadow rounded-xl bg-gray-50">
+        Lang<span className="text-gray-500">AI</span>
+      </h1>
 
       {/* Display global errors (detector initialization) */}
       {globalError && (
@@ -189,8 +187,9 @@ function App() {
         <div className="text-center text-gray-600 p-4 bg-gray-100 rounded-lg max-w-[800px] mt-4">
           <h2 className="text-2xl font-semibold">Welcome to LangAI 🎉</h2>
           <p className="mt-2">
-            Type something to **detect the language, translate, and summarize your text **. 
-            <br/>
+            Type something to **detect the language, translate, and summarize
+            your text **.
+            <br />
             Experience these features on desktop view!
           </p>
         </div>
@@ -209,15 +208,14 @@ function App() {
 
                 <div className="flex justify-between items-center mt-2">
                   {/* Display detected language */}
-                <p className="text-sm text-gray-500 mt-1">
-                  Language: {item.language}
-                </p>
-                 {/* Display character count */}
-                <p className="text-xs text-gray-500 mt-1">
-                  {item.text.length}/150 characters
-                </p>                
+                  <p className="text-sm text-gray-500 mt-1">
+                    Language: {item.language}
+                  </p>
+                  {/* Display character count */}
+                  <p className="text-xs text-gray-500 mt-1">
+                    {item.text.length}/150 characters
+                  </p>
                 </div>
-               
 
                 {/* Display item-specific error if present */}
                 {item.error && (
@@ -227,7 +225,9 @@ function App() {
                 {/* Language selection dropdown */}
                 <div className="flex items-center gap-2 mt-2 text-sm justify-end">
                   <div className="flex items-center gap-2">
-                    <label className="text-sm text-gray-600">Translate to:</label>
+                    <label className="text-sm text-gray-600">
+                      Translate to:
+                    </label>
                     <select
                       className="border rounded w-[95px] py-0.5 text-[12px]"
                       value={item.targetLanguage}
@@ -254,22 +254,20 @@ function App() {
 
                     {/* Summarize button - only appears if text length > 150 */}
                     {item.text.length > 150 && item.language === "en" && (
-                      <button className="border border-purple-500 text-gray-600 hover:bg-purple-400 hover:text-white p-1 rounded text-xs ml-2
+                      <button
+                        className="border border-purple-500 text-gray-600 hover:bg-purple-400 hover:text-white p-1 rounded text-xs ml-2
                       "
-                      onClick={() => handleSummarize(index)}
-                      aria-label="Summarize">
-                        {isSummarizing === index ? "Summarizing..." : "Summarize"}
+                        onClick={() => handleSummarize(index)}
+                        aria-label="Summarize"
+                      >
+                        {isSummarizing === index
+                          ? "Summarizing..."
+                          : "Summarize"}
                       </button>
                     )}
                   </div>
                 </div>
               </div>
-
-              {item.summary && (
-                <p className="mt-3 mb-6 w-full md:w-[70%] border border-gray-300 rounded-2xl p-3">
-                  Summary: {item.summary}
-                </p>
-              )}
 
               {/* Show translated text here */}
               {isTranslating === index ? (
@@ -278,9 +276,17 @@ function App() {
                 </p>
               ) : item.translation ? (
                 <p className="mt-3 mb-6 w-full md:w-[70%] border border-gray-300 bg-gray-50 rounded-2xl p-3 ">
-                  <b>Translation:</b><br/>{item.translation}
+                  <b>Translation:</b>
+                  <br />
+                  {item.translation}
                 </p>
               ) : null}
+
+              {item.summary && (
+                <p className="mt-3 mb-6 w-full md:w-[70%] border border-gray-300 rounded-2xl p-3">
+                  Summary: {item.summary}
+                </p>
+              )}
             </div>
           ))}
         </div>
