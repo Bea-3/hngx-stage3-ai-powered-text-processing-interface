@@ -188,8 +188,8 @@ function App() {
       {welcome && output.length === 0 && (
         <div className="text-center text-gray-600 p-4 bg-gray-100 rounded-lg max-w-[800px] mt-4">
           <h2 className="text-2xl font-semibold">Welcome to LangAI 🎉</h2>
-          <p className="mt-2 font-">
-            Type something to **detect the language, translate, and summarize your text**. 
+          <p className="mt-2">
+            Type something to **detect the language, translate, and summarize your text **. 
             <br/>
             Experience these features on desktop view!
           </p>
