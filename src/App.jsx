@@ -152,7 +152,9 @@ function App() {
     setIsSummarizing(index);
 
     try {
+      console.log(" Calling Summarizer...");
       const summary = await Summarizer(selectedOutput.text); // Call Summarizer function
+      console.log("Summary received:", summary);
       setOutput((prevOutput) => {
         const updatedOutput = [...prevOutput];
         updatedOutput[index].summary = summary;
@@ -224,7 +226,7 @@ function App() {
 
                 {/* Language selection dropdown */}
                 <div className="flex items-center gap-2 mt-2 text-sm justify-end">
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <label className="text-sm text-gray-600">
                       Translate to:
                     </label>

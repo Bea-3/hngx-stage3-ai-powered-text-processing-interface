@@ -1,36 +1,39 @@
-export const Summarizer = async (text) => {
-  if (!("ai" in self && "summarizer" in self.ai)) {
-    console.error("Summarizer API not available.");
-    return "Summarizer API is unavailable.";
-  }
-
-  const available = (await self.ai.summarizer.capabilities()).available;
-  if (available === "no") {
-    console.error("Summarizer API cannot be used.");
-    return "Summarizer API is not accessible.";
-  }
-
-  const summarizer = await self.ai.summarizer.create({
-    monitor(m) {
-      m.addEventListener("downloadprogress", (e) => {
-        console.log(`Downloaded ${e.loaded} of ${e.total} bytes.`);
-      });
-    },
-  });
-
-  await summarizer.ready;
-
+export async function Summarizer(text) {
   const options = {
-    sharedContext: "This is a scientific article",
-    type: "key-points",
-    format: "markdown",
-    length: "medium",
+    type: 'key-points',
+    format: 'markdown', 
+    length: 'medium',
   };
 
-  const summarizers = await self.ai.summarizer.create(options);
-  const summary = await summarizers.summarize(text, {
-    context: "This article is intended for a tech-savvy audience.",
-  });
+  try {
+    // 1️⃣ Check if summarizer is available
+    const available = (await self.ai.summarizer.capabilities()).available;
+    if (available === 'no') {
+      console.error("Summarizer API is not available.");
+      return "Summarization is not available.";
+    }
 
-  return summary;
-};
+    // 2️⃣ Create summarizer instance
+    let summarizer;
+    if (available === 'readily') {
+      summarizer = await self.ai.summarizer.create(options);
+    } else {
+      summarizer = await self.ai.summarizer.create(options);
+      summarizer.addEventListener('downloadprogress', (e) => {
+        console.log(`Downloaded ${e.loaded} of ${e.total} bytes.`);
+      });
+      await summarizer.ready; // Wait for download
+    }
+
+    // 3️⃣ Run the summarization
+    const summary = await summarizer.summarize(text, {
+      context: "This is an output field summary.",
+    });
+
+    return summary;
+
+  } catch (err) {
+    console.error("Summarization error:", err);
+    return "Error summarizing the text.";
+  }
+}
